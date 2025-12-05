@@ -8,7 +8,7 @@ entity sign_extend is
 
         output : out std_logic_vector(31 downto 0) );
 end entity;			 
-architecture Behave of sign_extend is
+architecture Behavior of sign_extend is
 begin
 
  output <= "0000000000000000" & input when (input(15) = '0') else
