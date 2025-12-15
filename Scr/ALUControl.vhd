@@ -1,64 +1,44 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-entity ControlUnit is
-    Port ( OpCode : in  STD_LOGIC_VECTOR (5 downto 0);
-           Funct : in  STD_LOGIC_VECTOR (5 downto 0);
-           MemtoReg : out  STD_LOGIC;
-           MemWrite : out  STD_LOGIC;
-           Branch : out  STD_LOGIC;
-           AluSrc : out  STD_LOGIC;
-           RegDst : out  STD_LOGIC;
-           RegWrite : out  STD_LOGIC;
-           Jump : out STD_LOGIC;
-           AluCtrl : out  STD_LOGIC_VECTOR (3 downto 0));
-end ControlUnit;
+entity ALUControl is
+  port(
+    ALUOp      : in  std_logic_vector(1 downto 0);
+    funct      : in  std_logic_vector(5 downto 0);
+    ALUControl : out std_logic_vector(3 downto 0) );
+end entity;
 
-architecture Behavioral of ControlUnit is
-    COMPONENT MainDecoder
-    PORT(
-        opcode : IN std_logic_vector(5 downto 0);          
-        RegWrite : OUT std_logic;
-        RegDst : OUT std_logic;
-        ALUSrc : OUT std_logic;
-        Branch : OUT std_logic;
-        MemWrite : OUT std_logic;
-        MemtoReg : OUT std_logic;
-        ALUOp : OUT std_logic_vector(1 downto 0);
-        Jump : OUT std_logic
-        );
-    END COMPONENT;
-    
-    COMPONENT ALUdecoder
-    PORT(
-        ALUop : IN std_logic_vector(1 downto 0);
-        funct : IN std_logic_vector(5 downto 0);
-        OpCode : IN std_logic_vector(5 downto 0);
-        ALUctrl : OUT std_logic_vector(3 downto 0)
-        );
-    END COMPONENT;
-
-    signal opalu: std_logic_vector(1 downto 0);
-
+architecture Behavior of ALUControl is
 begin
 
-    Inst_MainDecoder: MainDecoder PORT MAP(
-        opcode => OpCode,
-        RegWrite => RegWrite,
-        RegDst => RegDst,
-        ALUSrc => AluSrc,
-        Branch => Branch,
-        MemWrite => MemWrite,
-        MemtoReg => MemtoReg,
-        ALUOp => opalu,
-        Jump => Jump
-    );
+  process(ALUOp, funct)
+  begin
+    case ALUOp is
 
-    Inst_ALUdecoder: ALUdecoder PORT MAP(
-        ALUop => opalu,
-        funct => Funct,
-        OpCode => OpCode,
-        ALUctrl => AluCtrl
-    );
-    
-end Behavioral;
+      -- LW, SW => ADD
+      when "00" =>
+        ALUControl <= "0010";
+
+      -- BEQ => SUB
+      when "01" =>
+        ALUControl <= "0110";
+
+      -- R-type
+      when "10" =>
+        case funct is
+          when "100000" => ALUControl <= "0010"; -- ADD
+          when "100010" => ALUControl <= "0110"; -- SUB
+          when "100100" => ALUControl <= "0000"; -- AND
+          when "100101" => ALUControl <= "0001"; -- OR
+          when "101010" => ALUControl <= "0111"; -- SLT
+          when others   => ALUControl <= "1111"; -- undefined
+        end case;
+
+      when others =>
+        ALUControl <= "1111";
+
+    end case;
+  end process;
+
+end architecture;
