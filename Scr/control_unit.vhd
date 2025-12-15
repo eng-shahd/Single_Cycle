@@ -1,80 +1,64 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity control_unit is
-    Port(
-        opcode    : in  STD_LOGIC_VECTOR(5 downto 0);
-        RegDst    : out STD_LOGIC;
-        ALUSrc    : out STD_LOGIC;
-        MemtoReg  : out STD_LOGIC;
-        RegWrite  : out STD_LOGIC;
-        MemRead   : out STD_LOGIC;
-        MemWrite  : out STD_LOGIC;
-        Branch    : out STD_LOGIC;
-        ALUOp     : out STD_LOGIC_VECTOR(1 downto 0)
-    );
-end control_unit;
+entity ControlUnit is
+    Port ( OpCode : in  STD_LOGIC_VECTOR (5 downto 0);
+           Funct : in  STD_LOGIC_VECTOR (5 downto 0);
+           MemtoReg : out  STD_LOGIC;
+           MemWrite : out  STD_LOGIC;
+           Branch : out  STD_LOGIC;
+           AluSrc : out  STD_LOGIC;
+           RegDst : out  STD_LOGIC;
+           RegWrite : out  STD_LOGIC;
+           Jump : out STD_LOGIC;
+           AluCtrl : out  STD_LOGIC_VECTOR (3 downto 0));
+end ControlUnit;
 
-architecture Behavioral of control_unit is
+architecture Behavioral of ControlUnit is
+    COMPONENT MainDecoder
+    PORT(
+        opcode : IN std_logic_vector(5 downto 0);          
+        RegWrite : OUT std_logic;
+        RegDst : OUT std_logic;
+        ALUSrc : OUT std_logic;
+        Branch : OUT std_logic;
+        MemWrite : OUT std_logic;
+        MemtoReg : OUT std_logic;
+        ALUOp : OUT std_logic_vector(1 downto 0);
+        Jump : OUT std_logic
+        );
+    END COMPONENT;
+    
+    COMPONENT ALUdecoder
+    PORT(
+        ALUop : IN std_logic_vector(1 downto 0);
+        funct : IN std_logic_vector(5 downto 0);
+        OpCode : IN std_logic_vector(5 downto 0);
+        ALUctrl : OUT std_logic_vector(3 downto 0)
+        );
+    END COMPONENT;
+
+    signal opalu: std_logic_vector(1 downto 0);
+
 begin
 
-    process(opcode)
-    begin
-        RegDst   <= '0';
-        ALUSrc   <= '0';
-        MemtoReg <= '0';
-        RegWrite <= '0';
-        MemRead  <= '0';
-        MemWrite <= '0';
-        Branch   <= '0';
-        ALUOp    <= "00";
+    Inst_MainDecoder: MainDecoder PORT MAP(
+        opcode => OpCode,
+        RegWrite => RegWrite,
+        RegDst => RegDst,
+        ALUSrc => AluSrc,
+        Branch => Branch,
+        MemWrite => MemWrite,
+        MemtoReg => MemtoReg,
+        ALUOp => opalu,
+        Jump => Jump
+    );
 
-        case opcode is
-        
-            when "000000" =>
-                RegDst   <= '1';
-                ALUSrc   <= '0';
-                MemtoReg <= '0';
-                RegWrite <= '1';
-                MemRead  <= '0';
-                MemWrite <= '0';
-                Branch   <= '0';
-                ALUOp    <= "10";
-
-            when "100011" =>
-                RegDst   <= '0';
-                ALUSrc   <= '1';
-                MemtoReg <= '1';
-                RegWrite <= '1';
-                MemRead  <= '1';
-                MemWrite <= '0';
-                Branch   <= '0';
-                ALUOp    <= "00";
-
-            when "101011" =>
-                RegDst   <= '0';
-                ALUSrc   <= '1';
-                MemtoReg <= '0';
-                RegWrite <= '0';
-                MemRead  <= '0';
-                MemWrite <= '1';
-                Branch   <= '0';
-                ALUOp    <= "00";
-
-            when "000100" =>
-                RegDst   <= '0';
-                ALUSrc   <= '0';
-                MemtoReg <= '0';
-                RegWrite <= '0';
-                MemRead  <= '0';
-                MemWrite <= '0';
-                Branch   <= '1';
-                ALUOp    <= "01";
-
-            when others =>
-                null;
-        end case;
-    end process;
-
+    Inst_ALUdecoder: ALUdecoder PORT MAP(
+        ALUop => opalu,
+        funct => Funct,
+        OpCode => OpCode,
+        ALUctrl => AluCtrl
+    );
+    
 end Behavioral;
-
