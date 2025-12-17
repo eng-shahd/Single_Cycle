@@ -2,6 +2,18 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+   --> funct codes <--
+--------------------------------
+-- add         		  | 100000 |
+-- subtract    		  | 100010 |
+-- and         		  | 100100 |
+-- or          		  | 100101 |
+-- nor         		  | 100111 |
+-- shift_left  		  | 000000 |
+-- shift_right 		  | 000010 |
+-- set_is_less_than   | 101010 |
+--------------------------------
+
 entity ALUControl is
   port(
     ALUOp      : in  std_logic_vector(1 downto 0);
@@ -16,22 +28,25 @@ begin
   begin
     case ALUOp is
 
-      -- LW, SW => ADD
+      -- LW, SW => ADD 
       when "00" =>
-        ALUControl <= "0010";
+        ALUControl <= "0000";
 
       -- BEQ => SUB
       when "01" =>
-        ALUControl <= "0110";
+        ALUControl <= "0001";
 
       -- R-type
       when "10" =>
         case funct is
-          when "100000" => ALUControl <= "0010"; -- ADD
-          when "100010" => ALUControl <= "0110"; -- SUB
-          when "100100" => ALUControl <= "0000"; -- AND
-          when "100101" => ALUControl <= "0001"; -- OR
-          when "101010" => ALUControl <= "0111"; -- SLT
+          when "100000" => ALUControl <= "0000"; -- add
+          when "100010" => ALUControl <= "0001"; -- sub
+          when "100100" => ALUControl <= "0010"; -- and
+          when "100101" => ALUControl <= "0011"; -- or
+          when "100111" => ALUControl <= "0100"; -- nor
+          when "000000" => ALUControl <= "0101"; -- sll
+          when "000010" => ALUControl <= "0110"; -- srl
+	  when "101010" => ALUControl <= "0111"; -- slt
           when others   => ALUControl <= "1111"; -- undefined
         end case;
 

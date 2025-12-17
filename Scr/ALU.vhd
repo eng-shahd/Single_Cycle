@@ -1,6 +1,20 @@
 library ieee;
+library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_signed.all;
 use ieee.numeric_std.all;
+
+--> ALU Operation Codes <--
+--------------------------------
+-- add         			| 0000 |
+-- subtract    			| 0001 |
+-- and         			| 0010 |
+-- or          			| 0011 |
+-- nor         			| 0100 |
+-- shift_left  			| 0101 |
+-- shift_right 			| 0110 |
+-- set_is_less_than 	        | 0111 |
+--------------------------------
 
 entity ALU is
 	port(
@@ -12,30 +26,39 @@ entity ALU is
 end entity;
 
 architecture Behavior of ALU is		  
-	signal temp : std_logic_vector(31 downto 0);
+	signal temp : std_logic_vector(31 downto 0):= (others => '0');
 begin	  
-	temp<=
-		-- add
-   		std_logic_vector(unsigned(alu_op1) + unsigned(alu_op2)) when ALUControl = "0000" else
-		-- subtract
-  	 	std_logic_vector(unsigned(alu_op1) - unsigned(alu_op2)) when ALUControl = "0001" else
-    	-- AND
-    	alu_op1 AND  alu_op2 when ALUControl = "0010" else
-   		-- OR
-  		alu_op1 OR   alu_op2 when ALUControl = "0011" else
-    	-- NOR
-  		alu_op1 NOR  alu_op2 when ALUControl = "0100" else
-  		-- NAND
-    	alu_op1 NAND alu_op2 when ALUControl = "0101" else
-   		-- XOR
-    	alu_op1 XOR  alu_op2 when ALUControl = "0110" else
-    	-- shift left logical
-    	std_logic_vector(shift_left(unsigned(alu_op1), to_integer(unsigned(alu_op2(10 downto 6))))) when ALUControl = "0111" else
-    	-- shift right logical
-    	std_logic_vector(shift_right(unsigned(alu_op1), to_integer(unsigned(alu_op2(10 downto 6))))) when ALUControl = "1000" else
-    	(others => '0');
+process(alu_op1, alu_op2, ALUControl) is
+	begin
+		case ALUControl is
+			when "0000" =>		   
+				temp <= alu_op1 + alu_op2; -- add
+			when "0001" =>
+				temp <= alu_op1 - alu_op2; --sub
+			when "0010" =>
+				temp <= alu_op1 and alu_op2; -- and
+			when "0011" =>
+				temp <= alu_op1 or alu_op2; -- or
+			when "0100" =>
+			temp <= not (alu_op1 or alu_op2); -- nor
+		     -- shift left logical
+            when "0101" =>
+		    temp <=std_logic_vector(shift_left(unsigned(alu_op1), to_integer(unsigned(alu_op2(10 downto 6)))));
+			 when "0110" =>
+            -- shift right logical
+            temp <=std_logic_vector(shift_right(unsigned(alu_op1), to_integer(unsigned(alu_op2(10 downto 6)))));
+            when "0111" =>
+				if signed(alu_op1) < signed(alu_op2) then
+					temp <= (31 downto 1 => '0') & '1'; --slt -> A less than B -> '1'
+				else
+					temp <= (others => '0'); --slt -> A not less than B -> '0'
+				end if;
+			when others =>
+				temp <= (others => '0');
+		end case;		
+	end process;
 		
-	zero <= '1' when (temp <= "00000000000000000000000000000000") else '0';
+	zero <= '1' when (temp <= x"00000000") else '0';
   	alu_result <= temp;
 
 end architecture ;
